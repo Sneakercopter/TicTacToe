@@ -17,7 +17,7 @@ public class TicTacToe implements ActionListener{
 	int HEIGHT = 3;
 	ButtonSquare[][] gameBoard = new ButtonSquare[WIDTH][HEIGHT];
 	int[][] computerBoard = new int[WIDTH][HEIGHT]; // The computer needs this to visualise the game
-	boolean computerTurn = false;
+	boolean computerTurn = true;
 	boolean gameOver = false;
 	Random rand = new Random();
 	TreeTest tt;
@@ -29,6 +29,17 @@ public class TicTacToe implements ActionListener{
 	public TicTacToe() {
 		populateGameBoard();
 		createGui();
+		computerFirstTurn();
+	}
+	
+	public void computerFirstTurn() {
+		ButtonSquare sel = gameBoard[1][1];
+		computerBoard[1][1] = 2;
+		sel.setText("X");
+		sel.setOccupied(true);
+		sel.setVal(2);
+		sel.removeActionListener(this);
+		computerTurn = false;
 	}
 	
 	public void createGui() {
@@ -60,8 +71,8 @@ public class TicTacToe implements ActionListener{
 		// Many win conditions
 		// -1 = not over
 		// 0 = draw
-		// 1 = X wins
-		// 2 = O wins
+		// 1 = O wins
+		// 2 = X wins
 		for(int i = 0; i < gameBoard[0].length; i++) {
 			// Full row (Diagonal) is equal
 			if(gameBoard[i][0].getVal() == gameBoard[i][1].getVal() && gameBoard[i][1].getVal() == gameBoard[i][2].getVal()) {
@@ -128,7 +139,7 @@ public class TicTacToe implements ActionListener{
 		else {
 			if(src.getOccupied() != true) {
 				computerTurn = true;
-				src.setText("X");
+				src.setText("O");
 				src.setOccupied(true);
 				src.setVal(1);
 				src.removeActionListener(this);
@@ -163,7 +174,7 @@ public class TicTacToe implements ActionListener{
 		if(bestCoords != null) {
 			System.out.println("Best move: " + bestCoords[0] + ", " + bestCoords[1]);
 			ButtonSquare sel = gameBoard[bestCoords[0]][bestCoords[1]];
-			sel.setText("O");
+			sel.setText("X");
 			sel.setOccupied(true);
 			sel.setVal(2);
 			computerBoard[bestCoords[0]][bestCoords[1]] = 2;
@@ -176,10 +187,10 @@ public class TicTacToe implements ActionListener{
 					JOptionPane.showMessageDialog(null, "Game is a draw!");
 				}
 				else if(gameResult == 1) {
-					JOptionPane.showMessageDialog(null, "X wins!");
+					JOptionPane.showMessageDialog(null, "O wins!");
 				}
 				else if(gameResult == 2) {
-					JOptionPane.showMessageDialog(null, "O wins!");
+					JOptionPane.showMessageDialog(null, "X wins!");
 				}
 			}
 		}
@@ -202,15 +213,16 @@ public class TicTacToe implements ActionListener{
 				}
 			}
 		}
-		rand.nextInt(available.size());
-		ButtonSquare sel = available.get(rand.nextInt(available.size()));
-		sel.setText("O");
-		sel.setOccupied(true);
-		sel.setVal(2);
-		sel.removeActionListener(this);
-		
+		if(available.size() > 0) {
+			rand.nextInt(available.size());
+			ButtonSquare sel = available.get(rand.nextInt(available.size()));
+			sel.setText("X");
+			sel.setOccupied(true);
+			sel.setVal(2);
+			sel.removeActionListener(this);
+		}
 		int gameResult = isGameOver();
-		if(gameResult > 0) {
+		if(gameResult >= 0) {
 			System.out.println("Game over");
 			if(gameResult == 0) {
 				JOptionPane.showMessageDialog(null, "Game is a draw!");

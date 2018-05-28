@@ -119,6 +119,7 @@ public class TreeTest {
 	public int[] populateNodes() {
 		int currPlayer = 2; // Assuming the human has moved first
 		Deque<TTTNode> toReturn = null;
+		Deque<TTTNode> lossScenario = null;
 		while(nodeQueue.size() > 0) {
 			TTTNode curr = (TTTNode)nodeQueue.poll();
 			ArrayList<int[][]> childrenStates = getLegalMoves(curr.getGameState(), currPlayer);
@@ -133,14 +134,27 @@ public class TreeTest {
 						// Since this is BFS and it is optimal, if we find a loss scenario before
 						// we find a victory, do that first because we don't want to let the player
 						// win before we can.
-						if(toReturn == null) {
-							toReturn = new LinkedList<>();
+						if(lossScenario == null) {
+							System.out.println("Aiming for a preventative move");
+							lossScenario = new LinkedList<>();
 							TTTNode x = child;
 							while(x.getParent() != null) {
-								toReturn.addFirst(x);
+								lossScenario.addFirst(x);
 								x = x.getParent();
 							}
-							toReturn.addFirst(x);
+							lossScenario.addFirst(x);
+						}
+						else {
+							Deque<TTTNode> tempLossScenario = new LinkedList<>();
+							TTTNode x = child;
+							while(x.getParent() != null) {
+								tempLossScenario.addFirst(x);
+								x = x.getParent();
+							}
+							tempLossScenario.addFirst(x);
+							if(tempLossScenario.size() < lossScenario.size()) {
+								lossScenario = tempLossScenario;
+							}
 						}
 					}
 					else if(isLeaf(child.getGameState()) == 2){
@@ -150,6 +164,7 @@ public class TreeTest {
 							toReturn = new LinkedList<>();
 							TTTNode x = child;
 							while(x.getParent() != null) {
+								System.out.println("Aiming for a victory");
 								toReturn.addFirst(x);
 								x = x.getParent();
 							}
@@ -170,29 +185,36 @@ public class TreeTest {
 			}
 		}
 		//System.out.println("Populated!");
-		//System.out.println("Full search space: " + nodes);
-		if(toReturn == null) {
+		System.out.println("Full search space: " + nodes);
+		if(toReturn == null || lossScenario == null) {
 			// No way of winning was found...
 			return null;
 		}
+		
 		TTTNode currentState = toReturn.poll();
 		TTTNode moveToMake = toReturn.poll();
-		/*System.out.println("Current state: ");
-		for(int x = 0; x < 3; x++) {
-			for(int y = 0; y < 3; y++) {
-				System.out.print(currentState.getGameState()[x][y]);
-			}
-			System.out.println();
-		}
-		System.out.println("Best Move:");
-		for(int x = 0; x < 3; x++) {
-			for(int y = 0; y < 3; y++) {
-				System.out.print(moveToMake.getGameState()[x][y]);
-			}
-			System.out.println();
-		}
-		*/
+		TTTNode currentState2 = lossScenario.poll();
+		TTTNode preventativeToMake = lossScenario.poll();
+		
+		System.out.println("Path to win: " + toReturn.size());
+		System.out.println("Path to lose: " + lossScenario.size());
 		int[] bestCoords = null;
+		if(lossScenario.size() <= 1) {
+			// We need to make the goal move before the other person can
+			TTTNode goalMove = lossScenario.getLast();
+			
+			for(int x = 0; x < 3; x++) {
+				for(int y = 0; y < 3; y++) {
+					if(preventativeToMake.getGameState()[x][y] != goalMove.getGameState()[x][y]) {
+						bestCoords = new int[2];
+						bestCoords[0] = x;
+						bestCoords[1] = y;
+					}
+				}
+			}
+			return bestCoords;
+		}
+		// The is no risk of immediate loss, we can play our best move
 		for(int x = 0; x < 3; x++) {
 			for(int y = 0; y < 3; y++) {
 				if(currentState.getGameState()[x][y] != moveToMake.getGameState()[x][y]) {
